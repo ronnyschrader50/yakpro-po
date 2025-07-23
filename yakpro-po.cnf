@@ -23,8 +23,27 @@ $conf->t_ignore_pre_defined_classes     = 'all';        // 'all' (default value)
                                                         // same behaviour for properties...
 
 $conf->t_ignore_constants               = null;         // array where values are names to ignore.
-$conf->t_ignore_variables               = null;         // array where values are names to ignore.
-$conf->t_ignore_functions               = null;         // array where values are names to ignore.
+
+// WICHTIG: Superglobale Variablen für FileMaker-API nicht verschleiern
+$conf->t_ignore_variables               = array(
+    '_POST', '_GET', '_SERVER', '_SESSION', '_COOKIE', '_FILES', '_ENV', 
+    '_REQUEST', 'GLOBALS', 'license', 'config', 'imap', 'output'
+);
+
+// WICHTIG: Standard PHP-Funktionen für API nicht verschleiern
+$conf->t_ignore_functions               = array(
+    'json_encode', 'json_decode', 'header', 'http_response_code', 'die', 'exit',
+    'imap_open', 'imap_close', 'imap_search', 'imap_fetch_overview', 'imap_fetchbody',
+    'imap_fetchstructure', 'imap_uid', 'imap_reopen', 'imap_list', 'imap_timeout',
+    'imap_last_error', 'imap_mime_header_decode', 'strlen', 'trim', 'preg_replace',
+    'str_replace', 'strpos', 'substr', 'strtolower', 'strtoupper', 'explode', 'implode',
+    'array_slice', 'array_column', 'array_diff', 'array_unshift', 'in_array', 'sort',
+    'file_exists', 'mkdir', 'file_put_contents', 'dirname', 'time', 'date', 'mt_rand',
+    'usleep', 'error_log', 'base64_decode', 'quoted_printable_decode', 'mb_convert_encoding',
+    'sanitizeFilename', 'convertMimeEncoding', 'decodeEmailContent', 'getMimeType',
+    'processEmailParts', 'getFoldersToScan', 'detectEnvironment', 'getBaseUrl', 'getAvailableFolders'
+);
+
 $conf->t_ignore_class_constants         = null;         // array where values are names to ignore.
 $conf->t_ignore_methods                 = null;         // array where values are names to ignore.
 $conf->t_ignore_properties              = null;         // array where values are names to ignore.
@@ -35,8 +54,8 @@ $conf->t_ignore_namespaces              = null;         // array where values ar
 $conf->t_ignore_labels                  = null;         // array where values are names to ignore.
 
 $conf->t_ignore_constants_prefix        = null;         // array where values are prefix of names to ignore.
-$conf->t_ignore_variables_prefix        = null;         // array where values are prefix of names to ignore.
-$conf->t_ignore_functions_prefix        = null;         // array where values are prefix of names to ignore.
+$conf->t_ignore_variables_prefix        = array('_');   // WICHTIG: Variablen mit _ Prefix nicht verschleiern (Superglobals)
+$conf->t_ignore_functions_prefix        = array('imap_', 'json_', 'mb_');  // WICHTIG: Standard-Funktionen mit diesen Präfixen schützen
 
 $conf->t_ignore_class_constants_prefix  = null;         // array where values are prefix of names to ignore.
 $conf->t_ignore_properties_prefix       = null;         // array where values are prefix of names to ignore.
@@ -48,7 +67,7 @@ $conf->t_ignore_traits_prefix           = null;         // array where values ar
 $conf->t_ignore_namespaces_prefix       = null;         // array where values are prefix of names to ignore.
 $conf->t_ignore_labels_prefix           = null;         // array where values are prefix of names to ignore.
 
-$conf->parser_mode                      = 'PREFER_PHP5';// allowed modes are 'PREFER_PHP7', 'PREFER_PHP5', 'ONLY_PHP7', 'ONLY_PHP5'
+$conf->parser_mode                      = 'PREFER_PHP7';// allowed modes are 'PREFER_PHP7', 'PREFER_PHP5', 'ONLY_PHP7', 'ONLY_PHP5'
                                                         // see PHP-Parser documentation for meaning...
 
 $conf->scramble_mode                    = 'identifier'; // allowed modes are 'identifier', 'hexa', 'numeric'
@@ -57,8 +76,8 @@ $conf->scramble_length                  = 5;            // min length of scrambl
 $conf->t_obfuscate_php_extension        = array('php'); // array where values are extensions of php files to be obfuscated.
 
 $conf->obfuscate_constant_name          = true;         // self explanatory
-$conf->obfuscate_variable_name          = true;         // self explanatory
-$conf->obfuscate_function_name          = true;         // self explanatory
+$conf->obfuscate_variable_name          = true;         // self explanatory (aber mit Ausnahmen oben)
+$conf->obfuscate_function_name          = true;         // self explanatory (aber mit Ausnahmen oben)
 $conf->obfuscate_class_name             = true;         // self explanatory
 $conf->obfuscate_interface_name         = true;         // self explanatory
 $conf->obfuscate_trait_name             = true;         // self explanatory
@@ -69,9 +88,12 @@ $conf->obfuscate_namespace_name         = true;         // self explanatory
 $conf->obfuscate_label_name             = true;         // label: , goto label;  obfuscation
 $conf->obfuscate_if_statement           = true;         // obfuscation of  if else elseif statements
 $conf->obfuscate_loop_statement         = true;         // obfuscation of  for while do while statements
-$conf->obfuscate_string_literal         = true;         // pseudo-obfuscation of  string literals
 
-$conf->shuffle_stmts                    = true;         // shuffle chunks of statements!  disable this obfuscation (or minimize the number of chunks) if performance is important for you!
+// KRITISCH: String-Literale NICHT verschleiern für API-Output (JSON muss lesbar bleiben)
+$conf->obfuscate_string_literal         = false;        // WICHTIG: Für FileMaker-API auf false setzen!
+
+// Performance-optimierte Einstellungen für API-Scripts
+$conf->shuffle_stmts                    = false;        // Für APIs deaktivieren (Performance wichtiger)
 $conf->shuffle_stmts_min_chunk_size     =    1;         // minimum number of statements in a chunk! the min value is 1, that gives you the maximum of obfuscation ... and the minimum of performance...
 $conf->shuffle_stmts_chunk_mode         = 'fixed';      // 'fixed' or 'ratio' in fixed mode, the chunk_size is always equal to the min chunk size!
 $conf->shuffle_stmts_chunk_ratio        =   20;         // ratio > 1  100/ratio is the percentage of chunks in a statements sequence  ratio = 2 means 50%  ratio = 100 mins 1% ...
